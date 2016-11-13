@@ -1,0 +1,3 @@
+// the configured options and settings for Tutorial
+#define easy_nurbs_VERSION_MAJOR @easy_nurbs_VERSION_MAJOR@
+#define easy_nurbs_VERSION_MINOR @easy_nurbs_VERSION_MINOR@
