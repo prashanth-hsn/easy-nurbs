@@ -48,7 +48,7 @@ set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 set (SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 
-add_executable(easy_nurbs  WIN32 ${SOURCE_DIR}/easy_nurbs.cpp)
+add_executable(easy_nurbs  WIN32 ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/mainwindow.cpp)
 # Use the Widgets module from Qt 5.
 target_link_libraries(easy_nurbs Qt5::Widgets)
 
