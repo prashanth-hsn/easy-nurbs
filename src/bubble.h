@@ -48,36 +48,39 @@
 **
 ****************************************************************************/
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef BUBBLE_H
+#define BUBBLE_H
 
-#include <QMainWindow>
-#include <QTimer>
-#include <QGridLayout>
+#include <QBrush>
+#include <QColor>
+#include <QPointF>
+#include <QRect>
+#include <QRectF>
 
-QT_FORWARD_DECLARE_CLASS(QOpenGLWidget)
+QT_FORWARD_DECLARE_CLASS(QPainter)
 
-class MainWindow : public QMainWindow
+class Bubble
 {
-    Q_OBJECT
-
 public:
-    MainWindow();
-    void addNew();
-    bool timerEnabled() const { return m_timer->isActive(); }
+    Bubble(const QPointF &position, qreal radius, const QPointF &velocity);
+    ~Bubble();
 
-    void resizeEvent(QResizeEvent *);
-
-private slots:
-    void updateIntervalChanged(int value);
-    void timerUsageChanged(bool enabled);
+    void drawBubble(QPainter *painter);
+    void updateBrush();
+    void move(const QRect &bbox);
+    void updateCache();
+    QRectF rect();
 
 private:
-    QTimer *m_timer;
-    QGridLayout *m_layout;
-    int m_nextX;
-    int m_nextY;
-    QVector<QOpenGLWidget *> m_glWidgets;
+    QColor randomColor();
+
+    QBrush brush;
+    QPointF position;
+    QPointF vel;
+    qreal radius;
+    QColor innerColor;
+    QColor outerColor;
+    QImage *cache;
 };
 
 #endif

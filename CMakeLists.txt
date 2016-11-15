@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.8.11)
 project (easy_nurbs)
 
 # Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC OFF)
 
 # Set the cmake install path for find package to work.
 If(CMAKE_SYSTEM_NAME MATCHES "Windows")
@@ -51,8 +51,8 @@ include_directories("${CMAKE_BINARY_DIR}")
 set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 set (SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
-
-add_executable(easy_nurbs  WIN32 ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/mainwindow.cpp)
+set(SOURCES ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/mainwindow.cpp ${SOURCE_DIR}/glwidget.cpp ${SOURCE_DIR}/bubble.cpp ${SOURCE_DIR}/mainwindow.h  ${SOURCE_DIR}/glwidget.h ${SOURCE_DIR}/bubble.h)
+add_executable(easy_nurbs  WIN32 ${SOURCES})
 # Use the Widgets module from Qt 5.
 target_link_libraries(easy_nurbs Qt5::Widgets)
 

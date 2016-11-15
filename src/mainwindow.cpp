@@ -1,300 +1,189 @@
-#include <QtWidgets>
+/****************************************************************************
+**
+** Copyright (C) 2016 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the examples of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:BSD$
+** Commercial License Usage
+** Licensees holding valid commercial Qt licenses may use this file in
+** accordance with the commercial license agreement provided with the
+** Software or, alternatively, in accordance with the terms contained in
+** a written agreement between you and The Qt Company. For licensing terms
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
+**
+** BSD License Usage
+** Alternatively, you may use this file under the terms of the BSD license
+** as follows:
+**
+** "Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions are
+** met:
+**   * Redistributions of source code must retain the above copyright
+**     notice, this list of conditions and the following disclaimer.
+**   * Redistributions in binary form must reproduce the above copyright
+**     notice, this list of conditions and the following disclaimer in
+**     the documentation and/or other materials provided with the
+**     distribution.
+**   * Neither the name of The Qt Company Ltd nor the names of its
+**     contributors may be used to endorse or promote products derived
+**     from this software without specific prior written permission.
+**
+**
+** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
 
 #include "mainwindow.h"
 
+#include <QApplication>
+#include <QMenuBar>
+#include <QGroupBox>
+#include <QSlider>
+#include <QLabel>
+#include <QCheckBox>
+#include <QSpinBox>
+#include <QScrollArea>
+
+#include "glwidget.h"
+
+typedef void (QWidget::*QWidgetVoidSlot)();
+
 MainWindow::MainWindow()
-    : textEdit(new QPlainTextEdit)
+    : m_nextX(1), m_nextY(1)
 {
-    setCentralWidget(textEdit);
+    GLWidget *glwidget = new GLWidget(this, true, qRgb(20, 20, 50));
+    m_glWidgets << glwidget;
+    QLabel *label = new QLabel(this);
+    m_timer = new QTimer(this);
+    QSlider *slider = new QSlider(this);
+    slider->setOrientation(Qt::Horizontal);
 
-    createActions();
-    createStatusBar();
+    QLabel *updateLabel = new QLabel("Update interval");
+    QSpinBox *updateInterval = new QSpinBox(this);
+    updateInterval->setSuffix(" ms");
+    updateInterval->setValue(10);
+    updateInterval->setToolTip("Interval for the timer that calls update().\n"
+                               "Note that on most systems the swap will block to wait for vsync\n"
+                               "and therefore an interval < 16 ms will likely lead to a 60 FPS update rate.");
+    QGroupBox *updateGroupBox = new QGroupBox(this);
+    QCheckBox *timerBased = new QCheckBox("Use timer", this);
+    timerBased->setChecked(false);
+    timerBased->setToolTip("Toggles using a timer to trigger update().\n"
+                           "When not set, each paintGL() schedules the next update immediately,\n"
+                           "expecting the blocking swap to throttle the thread.\n"
+                           "This shows how unnecessary the timer is in most cases.");
+    QCheckBox *transparent = new QCheckBox("Transparent background", this);
+    transparent->setToolTip("Toggles Qt::WA_AlwaysStackOnTop and transparent clear color for glClear().\n"
+                            "Note how the button on top stacks incorrectly when enabling this.");
+    QHBoxLayout *updateLayout = new QHBoxLayout;
+    updateLayout->addWidget(updateLabel);
+    updateLayout->addWidget(updateInterval);
+    updateLayout->addWidget(timerBased);
+    updateLayout->addWidget(transparent);
+    updateGroupBox->setLayout(updateLayout);
 
-    readSettings();
+    slider->setRange(0, 50);
+    slider->setSliderPosition(30);
+    m_timer->setInterval(10);
+    label->setText("A scrollable QOpenGLWidget");
+    label->setAlignment(Qt::AlignHCenter);
 
-    connect(textEdit->document(), &QTextDocument::contentsChanged,
-            this, &MainWindow::documentWasModified);
+    QGroupBox * groupBox = new QGroupBox(this);
+    setCentralWidget(groupBox);
+    groupBox->setTitle("QOpenGLWidget Example");
 
-#ifndef QT_NO_SESSIONMANAGER
-    QGuiApplication::setFallbackSessionManagementEnabled(false);
-    connect(qApp, &QGuiApplication::commitDataRequest,
-            this, &MainWindow::commitData);
-#endif
+    m_layout = new QGridLayout(groupBox);
 
-    setCurrentFile(QString());
-    setUnifiedTitleAndToolBarOnMac(true);
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea->setWidget(glwidget);
+
+    m_layout->addWidget(scrollArea,1,0,8,1);
+    m_layout->addWidget(label,9,0,1,1);
+    m_layout->addWidget(updateGroupBox, 10, 0, 1, 1);
+    m_layout->addWidget(slider, 11,0,1,1);
+
+    groupBox->setLayout(m_layout);
+
+
+    QMenu *fileMenu = menuBar()->addMenu("&File");
+    fileMenu->addAction("E&xit", this, &QWidget::close);
+    QMenu *showMenu = menuBar()->addMenu("&Show");
+    showMenu->addAction("Show 3D Logo", glwidget, &GLWidget::setLogo);
+    showMenu->addAction("Show 2D Texture", glwidget, &GLWidget::setTexture);
+    QAction *showBubbles = showMenu->addAction("Show bubbles", glwidget, &GLWidget::setShowBubbles);
+    showBubbles->setCheckable(true);
+    showBubbles->setChecked(true);
+    QMenu *helpMenu = menuBar()->addMenu("&Help");
+    helpMenu->addAction("About Qt", qApp, &QApplication::aboutQt);
+
+    connect(m_timer, &QTimer::timeout,
+            glwidget, static_cast<QWidgetVoidSlot>(&QWidget::update));
+
+    connect(slider, &QAbstractSlider::valueChanged, glwidget, &GLWidget::setScaling);
+    connect(transparent, &QCheckBox::toggled, glwidget, &GLWidget::setTransparent);
+
+    typedef void (QSpinBox::*QSpinBoxIntSignal)(int);
+    connect(updateInterval, static_cast<QSpinBoxIntSignal>(&QSpinBox::valueChanged),
+            this, &MainWindow::updateIntervalChanged);
+    connect(timerBased, &QCheckBox::toggled, this, &MainWindow::timerUsageChanged);
+    connect(timerBased, &QCheckBox::toggled, updateInterval, &QWidget::setEnabled);
+
+    if (timerBased->isChecked())
+        m_timer->start();
+    else
+        updateInterval->setEnabled(false);
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::updateIntervalChanged(int value)
 {
-    if (maybeSave()) {
-        writeSettings();
-        event->accept();
-    } else {
-        event->ignore();
-    }
+    m_timer->setInterval(value);
+    if (m_timer->isActive())
+        m_timer->start();
 }
 
-void MainWindow::newFile()
+void MainWindow::addNew()
 {
-    if (maybeSave()) {
-        textEdit->clear();
-        setCurrentFile(QString());
-    }
-}
-
-void MainWindow::open()
-{
-    if (maybeSave()) {
-        QString fileName = QFileDialog::getOpenFileName(this);
-        if (!fileName.isEmpty())
-            loadFile(fileName);
-    }
-}
-
-bool MainWindow::save()
-{
-    if (curFile.isEmpty()) {
-        return saveAs();
-    } else {
-        return saveFile(curFile);
-    }
-}
-
-bool MainWindow::saveAs()
-{
-    QFileDialog dialog(this);
-    dialog.setWindowModality(Qt::WindowModal);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    if (dialog.exec() != QDialog::Accepted)
-        return false;
-    return saveFile(dialog.selectedFiles().first());
-}
-
-void MainWindow::about()
-{
-   QMessageBox::about(this, tr("About Application"),
-            tr("The <b>Application</b> example demonstrates how to "
-               "write modern GUI applications using Qt, with a menu bar, "
-               "toolbars, and a status bar."));
-}
-
-void MainWindow::documentWasModified()
-{
-    setWindowModified(textEdit->document()->isModified());
-}
-
-void MainWindow::createActions()
-{
-
-    QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
-    QToolBar *fileToolBar = addToolBar(tr("File"));
-    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
-    QAction *newAct = new QAction(newIcon, tr("&New"), this);
-    newAct->setShortcuts(QKeySequence::New);
-    newAct->setStatusTip(tr("Create a new file"));
-    connect(newAct, &QAction::triggered, this, &MainWindow::newFile);
-    fileMenu->addAction(newAct);
-    fileToolBar->addAction(newAct);
-
-    const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
-    QAction *openAct = new QAction(openIcon, tr("&Open..."), this);
-    openAct->setShortcuts(QKeySequence::Open);
-    openAct->setStatusTip(tr("Open an existing file"));
-    connect(openAct, &QAction::triggered, this, &MainWindow::open);
-    fileMenu->addAction(openAct);
-    fileToolBar->addAction(openAct);
-
-    const QIcon saveIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
-    QAction *saveAct = new QAction(saveIcon, tr("&Save"), this);
-    saveAct->setShortcuts(QKeySequence::Save);
-    saveAct->setStatusTip(tr("Save the document to disk"));
-    connect(saveAct, &QAction::triggered, this, &MainWindow::save);
-    fileMenu->addAction(saveAct);
-    fileToolBar->addAction(saveAct);
-
-    const QIcon saveAsIcon = QIcon::fromTheme("document-save-as");
-    QAction *saveAsAct = fileMenu->addAction(saveAsIcon, tr("Save &As..."), this, &MainWindow::saveAs);
-    saveAsAct->setShortcuts(QKeySequence::SaveAs);
-    saveAsAct->setStatusTip(tr("Save the document under a new name"));
-
-
-    fileMenu->addSeparator();
-
-    const QIcon exitIcon = QIcon::fromTheme("application-exit");
-    QAction *exitAct = fileMenu->addAction(exitIcon, tr("E&xit"), this, &QWidget::close);
-    exitAct->setShortcuts(QKeySequence::Quit);
-    exitAct->setStatusTip(tr("Exit the application"));
-
-    QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
-    QToolBar *editToolBar = addToolBar(tr("Edit"));
-#ifndef QT_NO_CLIPBOARD
-    const QIcon cutIcon = QIcon::fromTheme("edit-cut", QIcon(":/images/cut.png"));
-    QAction *cutAct = new QAction(cutIcon, tr("Cu&t"), this);
-    cutAct->setShortcuts(QKeySequence::Cut);
-    cutAct->setStatusTip(tr("Cut the current selection's contents to the "
-                            "clipboard"));
-    connect(cutAct, &QAction::triggered, textEdit, &QPlainTextEdit::cut);
-    editMenu->addAction(cutAct);
-    editToolBar->addAction(cutAct);
-
-    const QIcon copyIcon = QIcon::fromTheme("edit-copy", QIcon(":/images/copy.png"));
-    QAction *copyAct = new QAction(copyIcon, tr("&Copy"), this);
-    copyAct->setShortcuts(QKeySequence::Copy);
-    copyAct->setStatusTip(tr("Copy the current selection's contents to the "
-                             "clipboard"));
-    connect(copyAct, &QAction::triggered, textEdit, &QPlainTextEdit::copy);
-    editMenu->addAction(copyAct);
-    editToolBar->addAction(copyAct);
-
-    const QIcon pasteIcon = QIcon::fromTheme("edit-paste", QIcon(":/images/paste.png"));
-    QAction *pasteAct = new QAction(pasteIcon, tr("&Paste"), this);
-    pasteAct->setShortcuts(QKeySequence::Paste);
-    pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current "
-                              "selection"));
-    connect(pasteAct, &QAction::triggered, textEdit, &QPlainTextEdit::paste);
-    editMenu->addAction(pasteAct);
-    editToolBar->addAction(pasteAct);
-
-    menuBar()->addSeparator();
-
-#endif // !QT_NO_CLIPBOARD
-
-    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
-    QAction *aboutAct = helpMenu->addAction(tr("&About"), this, &MainWindow::about);
-    aboutAct->setStatusTip(tr("Show the application's About box"));
-
-
-    QAction *aboutQtAct = helpMenu->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
-    aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
-
-#ifndef QT_NO_CLIPBOARD
-    cutAct->setEnabled(false);
-    copyAct->setEnabled(false);
-    connect(textEdit, &QPlainTextEdit::copyAvailable, cutAct, &QAction::setEnabled);
-    connect(textEdit, &QPlainTextEdit::copyAvailable, copyAct, &QAction::setEnabled);
-#endif // !QT_NO_CLIPBOARD
-}
-
-void MainWindow::createStatusBar()
-{
-    statusBar()->showMessage(tr("Ready"));
-}
-
-void MainWindow::readSettings()
-{
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-    const QByteArray geometry = settings.value("geometry", QByteArray()).toByteArray();
-    if (geometry.isEmpty()) {
-        const QRect availableGeometry = QApplication::desktop()->availableGeometry(this);
-        resize(availableGeometry.width() / 3, availableGeometry.height() / 2);
-        move((availableGeometry.width() - width()) / 2,
-             (availableGeometry.height() - height()) / 2);
-    } else {
-        restoreGeometry(geometry);
-    }
-}
-
-void MainWindow::writeSettings()
-{
-    QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
-    settings.setValue("geometry", saveGeometry());
-}
-
-bool MainWindow::maybeSave()
-{
-    if (!textEdit->document()->isModified())
-        return true;
-    const QMessageBox::StandardButton ret
-        = QMessageBox::warning(this, tr("Application"),
-                               tr("The document has been modified.\n"
-                                  "Do you want to save your changes?"),
-                               QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-    switch (ret) {
-    case QMessageBox::Save:
-        return save();
-    case QMessageBox::Cancel:
-        return false;
-    default:
-        break;
-    }
-    return true;
-}
-
-void MainWindow::loadFile(const QString &fileName)
-{
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(this, tr("Application"),
-                             tr("Cannot read file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(fileName), file.errorString()));
+    if (m_nextY == 4)
         return;
-    }
-
-    QTextStream in(&file);
-#ifndef QT_NO_CURSOR
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-#endif
-    textEdit->setPlainText(in.readAll());
-#ifndef QT_NO_CURSOR
-    QApplication::restoreOverrideCursor();
-#endif
-
-    setCurrentFile(fileName);
-    statusBar()->showMessage(tr("File loaded"), 2000);
-}
-
-bool MainWindow::saveFile(const QString &fileName)
-{
-    QFile file(fileName);
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, tr("Application"),
-                             tr("Cannot write file %1:\n%2.")
-                             .arg(QDir::toNativeSeparators(fileName),
-                                  file.errorString()));
-        return false;
-    }
-
-    QTextStream out(&file);
-#ifndef QT_NO_CURSOR
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-#endif
-    out << textEdit->toPlainText();
-#ifndef QT_NO_CURSOR
-    QApplication::restoreOverrideCursor();
-#endif
-
-    setCurrentFile(fileName);
-    statusBar()->showMessage(tr("File saved"), 2000);
-    return true;
-}
-
-void MainWindow::setCurrentFile(const QString &fileName)
-{
-    curFile = fileName;
-    textEdit->document()->setModified(false);
-    setWindowModified(false);
-
-    QString shownName = curFile;
-    if (curFile.isEmpty())
-        shownName = "untitled.txt";
-    setWindowFilePath(shownName);
-}
-
-QString MainWindow::strippedName(const QString &fullFileName)
-{
-    return QFileInfo(fullFileName).fileName();
-}
-#ifndef QT_NO_SESSIONMANAGER
-void MainWindow::commitData(QSessionManager &manager)
-{
-    if (manager.allowsInteraction()) {
-        if (!maybeSave())
-            manager.cancel();
+    GLWidget *w = new GLWidget(this, false, qRgb(qrand() % 256, qrand() % 256, qrand() % 256));
+    m_glWidgets << w;
+    connect(m_timer, &QTimer::timeout, w, static_cast<QWidgetVoidSlot>(&QWidget::update));
+    m_layout->addWidget(w, m_nextY, m_nextX, 1, 1);
+    if (m_nextX == 3) {
+        m_nextX = 1;
+        ++m_nextY;
     } else {
-        // Non-interactive: save without asking
-        if (textEdit->document()->isModified())
-            save();
+        ++m_nextX;
     }
 }
-#endif
+
+void MainWindow::timerUsageChanged(bool enabled)
+{
+    if (enabled) {
+        m_timer->start();
+    } else {
+        m_timer->stop();
+        foreach (QOpenGLWidget *w, m_glWidgets)
+            w->update();
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *)
+{
+     m_glWidgets[0]->setMinimumSize(size() + QSize(128, 128));
+}
