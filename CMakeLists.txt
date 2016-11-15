@@ -6,7 +6,11 @@ project (easy_nurbs)
 set(CMAKE_AUTOMOC ON)
 
 # Set the cmake install path for find package to work.
-set (CMAKE_PREFIX_PATH /home/prashanth/Qt5.7.0/5.7/gcc_64)
+If(CMAKE_SYSTEM_NAME MATCHES "Windows")
+	set (CMAKE_PREFIX_PATH "C:\\Qt\\5.7\\msvc2015_64")
+Elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+	set (CMAKE_PREFIX_PATH /home/prashanth/Qt5.7.0/5.7/gcc_64)
+Endif()
 
 # Find the QtWidgets library
 find_package(Qt5Widgets REQUIRED)
