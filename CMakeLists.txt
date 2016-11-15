@@ -3,17 +3,18 @@ cmake_minimum_required (VERSION 2.8.11)
 project (easy_nurbs)
 
 # Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC OFF)
+set(CMAKE_AUTOMOC ON)
 
 # Set the cmake install path for find package to work.
 If(CMAKE_SYSTEM_NAME MATCHES "Windows")
-	set (CMAKE_PREFIX_PATH "C:\\Qt\\5.7\\msvc2015_64")
+  set (CMAKE_PREFIX_PATH "C:\\Qt\\5.7\\msvc2015_64")
 Elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-	set (CMAKE_PREFIX_PATH /home/prashanth/Qt5.7.0/5.7/gcc_64)
+  set (CMAKE_PREFIX_PATH /home/prashanth/Qt5.7.0/5.7/gcc_64)
 Endif()
 
 # Find the QtWidgets library
-find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Widgets)
+find_package(Qt5OpenGL)
 
 # Set the output directory
 If(NOT CMAKE_BUILD_TYPE)
@@ -52,10 +53,10 @@ set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 set (SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 set(SOURCES ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/mainwindow.cpp ${SOURCE_DIR}/glwidget.cpp ${SOURCE_DIR}/bubble.cpp ${SOURCE_DIR}/mainwindow.h  ${SOURCE_DIR}/glwidget.h ${SOURCE_DIR}/bubble.h)
+
+
 add_executable(easy_nurbs  WIN32 ${SOURCES})
+
 # Use the Widgets module from Qt 5.
-target_link_libraries(easy_nurbs Qt5::Widgets)
+target_link_libraries(easy_nurbs Qt5::Widgets Qt5::OpenGL)
 
-
-# cmake -H. -Bbuild
-# cmake --build build -- -j3

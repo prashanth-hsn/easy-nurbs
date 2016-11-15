@@ -2,26 +2,23 @@
 #include "easy_nurbs.h"
 
 #include <QApplication>
-#include <QCommandLineParser>
-#include <QCommandLineOption>
+#include <QMainWindow>
+#include <QSurfaceFormat>
 #include "mainwindow.h"
-#include <iostream>
 
-int main (int argc, char *argv[])
+int main( int argc, char ** argv )
 {
-    QApplication app(argc, argv);
-    QCoreApplication::setOrganizationName("Prakruthi");
-    QCoreApplication::setApplicationName("Easy-nurbs");
-    QString versionNumber = QString("%1.%2").arg(easy_nurbs_VERSION_MAJOR).arg(easy_nurbs_VERSION_MINOR);
-    QCoreApplication::setApplicationVersion(versionNumber);
-    QCommandLineParser parser;
-    parser.setApplicationDescription(QCoreApplication::applicationName());
-    parser.addHelpOption();
-    parser.addVersionOption();
-//  Add command options here.
-    parser.process(app);
+//    Q_INIT_RESOURCE(texture);
+    QApplication a( argc, argv );
 
-    MainWindow mainWin;
-    mainWin.show();
-    return app.exec();
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
+    if (QCoreApplication::arguments().contains(QStringLiteral("--multisample")))
+        format.setSamples(4);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    MainWindow mw;
+    mw.showMaximized();
+    return a.exec();
 }
