@@ -1,4 +1,4 @@
-// A simple program that computes the square root of a number
+// Easy nurbs
 #include "easy_nurbs.h"
 
 #include <QApplication>
