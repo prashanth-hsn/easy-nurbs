@@ -407,8 +407,7 @@ void GLWidget::paintGL()
 
     // When requested, follow the ideal way to animate: Rely on
     // blocking swap and just schedule updates continuously.
-    if (!m_mainWindow->timerEnabled())
-        update();
+
 }
 
 void GLWidget::createBubbles(int number)
@@ -560,5 +559,5 @@ void GLWidget::resizeGL(int, int)
 
 void GLWidget::handleButtonPress()
 {
-    m_mainWindow->addNew();
+
 }
