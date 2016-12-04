@@ -86,11 +86,11 @@ MainWindow::MainWindow()
     QMenu *fileMenu = menuBar()->addMenu("&File");
     fileMenu->addAction("E&xit", this, &QWidget::close);
     QMenu *showMenu = menuBar()->addMenu("&Show");
-    showMenu->addAction("Show 3D Logo", glwidget, &GLWidget::setLogo);
-    showMenu->addAction("Show 2D Texture", glwidget, &GLWidget::setTexture);
-    QAction *showBubbles = showMenu->addAction("Show bubbles", glwidget, &GLWidget::setShowBubbles);
-    showBubbles->setCheckable(true);
-    showBubbles->setChecked(true);
+    //showMenu->addAction("Show 3D Logo", glwidget, &GLWidget::setLogo);
+    //showMenu->addAction("Show 2D Texture", glwidget, &GLWidget::setTexture);
+    //QAction *showBubbles = showMenu->addAction("Show bubbles", glwidget, &GLWidget::setShowBubbles);
+    //showBubbles->setCheckable(true);
+    //showBubbles->setChecked(true);
     QMenu *helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction("About Qt", qApp, &QApplication::aboutQt);
 
