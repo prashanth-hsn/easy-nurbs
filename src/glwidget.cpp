@@ -49,7 +49,6 @@
  ****************************************************************************/
 
 #include "glwidget.h"
-#include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 #include <QCoreApplication>
 #include <math.h>
@@ -62,6 +61,14 @@ GLWidget::GLWidget(MainWindow *mw, bool button, const QColor &background)
     : m_mainWindow(mw)
 {
     setMinimumSize(300, 250);
+    m_vertices<<-0.9f<<-0.9f;
+    m_vertices<<0.85f<<-0.9f;
+    m_vertices<<-0.9f<<0.85f;
+
+    m_vertices<<0.9f<<-0.85f;
+    m_vertices<<0.9f<<0.9f;
+    m_vertices<<-0.85f<<0.9f;
+
 }
 
 GLWidget::~GLWidget()
@@ -69,6 +76,10 @@ GLWidget::~GLWidget()
 
     // And now release all OpenGL resources.
     makeCurrent();
+    delete m_program;
+    delete m_vshader;
+    delete m_fshader;
+    m_vbo.destroy();
     doneCurrent();
 }
 
@@ -76,14 +87,45 @@ GLWidget::~GLWidget()
 void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
+
+    m_vshader = new QOpenGLShader(QOpenGLShader::Vertex);
+    m_fshader = new QOpenGLShader(QOpenGLShader::Fragment);
+    if (m_vshader->compileSourceFile(QString("shader/passThrough.vert"))
+            &&
+            m_fshader->compileSourceFile(QString("shader/passThrough.frag")))
+    {
+        m_vbo.create();
+        m_vbo.bind();
+
+        m_vbo.allocate(m_vertices.constData(), m_vertices.count() * sizeof(GLfloat));
+        m_vbo.release();
+
+        m_program = new QOpenGLShaderProgram;
+        m_program->addShader(m_vshader);
+        m_program->addShader(m_fshader);
+        m_program->link();
+        m_program->bind();
+        m_vertexAttr = m_program->attributeLocation("vPosition");
+    }
 }
 
 void GLWidget::paintGL()
 {
 
+    if (m_program->isLinked())
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
 
-    // When requested, follow the ideal way to animate: Rely on
-    // blocking swap and just schedule updates continuously.
+        m_program->enableAttributeArray(m_vertexAttr);
+        m_vbo.bind();
+        m_program->setAttributeBuffer(m_vertexAttr, GL_FLOAT, 0, 2);
+        m_vbo.release();
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        m_program->disableAttributeArray(m_vertexAttr);
+        glFlush();
+    }
 
 }
 

@@ -11,8 +11,10 @@
 #include <QTime>
 #include <QVector>
 #include <QPushButton>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLTexture>
+#include <QCoreApplication>
 
-class Bubble;
 class MainWindow;
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
@@ -32,8 +34,13 @@ protected:
     void initializeGL() Q_DECL_OVERRIDE;
 
 private:
-
+    int m_vertexAttr;
+    QOpenGLShader *m_vshader;
+    QOpenGLShader *m_fshader;
+    QOpenGLShaderProgram *m_program;
     MainWindow *m_mainWindow;
+    QOpenGLBuffer m_vbo;
+    QVector<GLfloat> m_vertices;
 };
 
 #endif

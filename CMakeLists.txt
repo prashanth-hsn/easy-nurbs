@@ -52,7 +52,8 @@ include_directories("${CMAKE_BINARY_DIR}")
 set (EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 set (SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
-set(SOURCES ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/mainwindow.cpp ${SOURCE_DIR}/glwidget.cpp ${SOURCE_DIR}/mainwindow.h  ${SOURCE_DIR}/glwidget.h )
+set(SOURCES ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/mainwindow.cpp ${SOURCE_DIR}/glwidget.cpp ${SOURCE_DIR}/mainwindow.h  ${SOURCE_DIR}/glwidget.h
+    ${SOURCE_DIR}/shader/passThrough.frag  ${SOURCE_DIR}/shader/passThrough.vert )
 
 
 add_executable(easy_nurbs  WIN32 ${SOURCES})
