@@ -52,23 +52,26 @@
 #include <QOpenGLTexture>
 #include <QCoreApplication>
 #include <math.h>
-
+#include "cnurb.h"
 #include "mainwindow.h"
+#include "teapot.h"
 
 const int bubbleNum = 8;
 
-GLWidget::GLWidget(MainWindow *mw, bool button, const QColor &background)
+GLWidget::GLWidget(MainWindow *mw)
     : m_mainWindow(mw)
 {
-    setMinimumSize(300, 250);
-    m_vertices<<-0.9f<<-0.9f;
-    m_vertices<<0.85f<<-0.9f;
-    m_vertices<<-0.9f<<0.85f;
+    setMinimumSize(300, 250); // Set widget size
+    QVector<QVector3D> points;
+    for (int i=0; i<nBottom; i++)
+    {
+        points.push_back(QVector3D(Vertices[Bottom[i]][0], Vertices[Bottom[i]][1], Vertices[Bottom[i]][2]));
+    }
+    short p, q;
+    QVector<float> U,V;
+    p = q = 2;
 
-    m_vertices<<0.9f<<-0.85f;
-    m_vertices<<0.9f<<0.9f;
-    m_vertices<<-0.85f<<0.9f;
-
+    m_nurb = new CNurb();
 }
 
 GLWidget::~GLWidget()

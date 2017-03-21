@@ -78,7 +78,7 @@ MainWindow::MainWindow()
 	m_mdiArea->addSubWindow(subWindow1);
 
 	QScrollArea *scrollArea = new QScrollArea;
-	GLWidget *glwidget = new GLWidget(this, true, qRgb(20, 20, 50));
+    GLWidget *glwidget = new GLWidget(this);
 
 	subWindow1->setAttribute(Qt::WA_DeleteOnClose);
 	subWindow1->setWidget(glwidget);

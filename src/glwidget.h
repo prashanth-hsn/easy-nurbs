@@ -15,6 +15,8 @@
 #include <QOpenGLTexture>
 #include <QCoreApplication>
 
+#include "cnurb.h"
+
 class MainWindow;
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
@@ -25,7 +27,7 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 public:
-    GLWidget(MainWindow *mw, bool button, const QColor &background);
+    GLWidget(MainWindow *mw);
     ~GLWidget();
 
 protected:
@@ -40,7 +42,7 @@ private:
     QOpenGLShaderProgram *m_program;
     MainWindow *m_mainWindow;
     QOpenGLBuffer m_vbo;
-    QVector<GLfloat> m_vertices;
+    CNurb *m_nurb;
 };
 
 #endif
